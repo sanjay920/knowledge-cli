@@ -1,0 +1,15 @@
+click
+FlagEmbedding
+llama-index-embeddings-openai
+llama-index-readers-file
+llama-index-vector-stores-milvus==0.2.4
+llama-index-core
+llama-index-embeddings-ollama
+peft
+Pillow
+pymilvus
+python-pptx
+rich
+torch
+transformers
+Wand

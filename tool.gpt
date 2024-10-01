@@ -1,0 +1,53 @@
+tools: create_dataset, sys.find, ingest, retrieve, delete_dataset, get_dataset, list_datasets, uuidgen
+chat: true
+
+Ask the user what they want to answer from the knowledge, then use the retrieve tool to find relevant chunks and answer the users question from the dataset foobar
+
+---
+name: create_dataset
+description: Create a new Dataset in the Knowledge Base
+args: id: ID of the Dataset
+
+#!python knowledge_cli.py create-dataset ${id}
+
+---
+name: ingest
+description: Ingest a file or all files from a directory into a Knowledge Base Dataset
+args: id: ID of the Dataset
+args: filepath: Path to the file or directory to be ingested
+
+#!python knowledge_cli.py ingest -d ${id} -r ${filepath}
+
+---
+name: retrieve
+description: Retrieve information from a Knowledge Base Dataset
+args: id: ID of the Dataset
+args: query: Query to be executed against the Knowledge Base Dataset
+
+#!python knowledge_cli.py retrieve -k 50 -d ${id} ${query}
+
+---
+name: delete_dataset
+description: Delete a Dataset from the Knowledge Base
+args: id: ID of the Dataset
+
+#!python knowledge_cli.py delete-dataset ${id}
+
+---
+name: get_dataset
+description: Get a Dataset from the Knowledge Base
+args: id: ID of the Dataset
+
+#!python knowledge_cli.py get-dataset ${id}
+
+---
+name: list_datasets
+description: List all Datasets in the Knowledge Base
+
+#!python knowledge_cli.py list-datasets
+
+---
+name: uuidgen
+description: Generate a random UUID
+
+#!uuidgen

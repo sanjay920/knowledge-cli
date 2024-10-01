@@ -1,0 +1,78 @@
+tools: create_dataset, sys.find, ingest, retrieve, delete_dataset, get_datasets, list_datasets, uuidgen
+chat: true
+
+Please follow the instructions to help the user interact with a dataset and answer their questions.
+
+First, ask the user what dataset they would like to interact with and use the `get_datasets` tool to ensure the dataset exists and can be retrieved. Then, ask the user what specific information or question they have regarding the dataset. Finally, use the `retrieve` tool to find relevant data chunks and provide a coherent answer to the user’s query.
+
+# Steps
+
+1. Ask the user to specify the dataset they want to interact with.
+2. Verify the existence of the dataset using the `get_datasets` tool before proceeding.
+3. Prompt the user to specify their question or the particular information they seek from the dataset.
+4. Use the `retrieve` tool to find and extract relevant data chunks based on the user's question. Skip this step if the information is already in the context.
+5. Construct a coherent and informative response to the user's query using the retrieved data.
+
+# Output Format
+
+- Ensure queries and responses are in a conversational style.
+- Use a structured format for the interactions, where each step is clearly delineated.
+- Use citations as much as possible by referencing the file_path **and** blockquotes when available so the user knows where you are generating answers from.
+
+E.g.
+Here is the relevant excerpt from the file FILE_NAME_OR_FILEPATH_HERE:
+
+# Notes
+
+- Ensure all interactions with the tools (`get_datasets` and `retrieve`) are validated before moving to the next step.
+- If the dataset is not available, inform the user politely and offer to check for another dataset.
+- Make sure the responses are accurate and directly address the user's question based on the retrieved data.
+
+---
+name: create_dataset
+description: Create a new Dataset in the Knowledge Base
+args: id: ID of the Dataset
+
+#!knowledge-hybrid create-dataset ${id}
+
+---
+name: ingest
+description: Ingest a file or all files from a directory into a Knowledge Base Dataset
+args: id: ID of the Dataset
+args: filepath: Path to the file or directory to be ingested
+
+#!knowledge-hybrid ingest -d ${id} -r ${filepath}
+
+---
+name: retrieve
+description: Retrieve information from a Knowledge Base Dataset
+args: id: ID of the Dataset
+args: query: Query to be executed against the Knowledge Base Dataset
+
+#!knowledge-hybrid retrieve -k 10 -d ${id} ${query}
+
+---
+name: delete_dataset
+description: Delete a Dataset from the Knowledge Base
+args: id: ID of the Dataset
+
+#!knowledge-hybrid delete-dataset ${id}
+
+---
+name: get_datasets
+description: Gets all Dataset names from the Knowledge Base
+
+#!knowledge-hybrid get-datasets
+
+---
+name: list_datasets
+description: List all Datasets in the Knowledge Base
+
+#!knowledge-hybrid list-datasets
+
+---
+name: uuidgen
+description: Generate a random UUID
+
+#!uuidgen
+
