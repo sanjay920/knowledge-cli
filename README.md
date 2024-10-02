@@ -12,6 +12,14 @@ Knowledge CLI is a command-line tool for managing and querying datasets using ve
 
 ## Prerequisites
 
+### OpenAI API Key
+
+Set your OpenAI API Key
+
+```bash
+export OPENAI_API_KEY=YOUR_API_KEY
+```
+
 ### Milvus Setup
 
 This CLI tool requires Milvus to be running. The easiest way to set up Milvus is using Docker. Follow these steps to install and run Milvus:
@@ -71,7 +79,7 @@ knowledge-hybrid create-dataset my_dataset
 ### Ingest data into a dataset
 
 ```bash
-knowledge-hybrid ingest -d my_dataset -r /path/to/data
+knowledge-hybrid ingest -d my_dataset /path/to/data
 ```
 
 ### Retrieve information from a dataset
