@@ -31,32 +31,32 @@ Here is the relevant excerpt from the file FILE_NAME_OR_FILEPATH_HERE:
 ---
 name: create_dataset
 description: Create a new Dataset in the Knowledge Base
-args: id: ID of the Dataset
+args: ID: ID of the Dataset
 
-#!knowledge-hybrid create-dataset ${id}
+#!knowledge-hybrid create-dataset ${ID}
 
 ---
 name: ingest
 description: Ingest a file or all files from a directory into a Knowledge Base Dataset
-args: id: ID of the Dataset
-args: filepath: Path to the file or directory to be ingested
+args: ID: ID of the Dataset
+args: QUERY: Path to the file or directory to be ingested
 
-#!knowledge-hybrid ingest -d ${id} -r ${filepath}
+#!knowledge-hybrid ingest -d ${ID} -r ${QUERY}
 
 ---
 name: retrieve
 description: Retrieve information from a Knowledge Base Dataset
-args: id: ID of the Dataset
-args: query: Query to be executed against the Knowledge Base Dataset
+args: ID: ID of the Dataset
+args: QUERY: Query to be executed against the Knowledge Base Dataset
 
-#!knowledge-hybrid retrieve -k 10 -d ${id} ${query}
+#!knowledge-hybrid retrieve -k 10 -d ${ID} ${QUERY}
 
 ---
 name: delete_dataset
 description: Delete a Dataset from the Knowledge Base
-args: id: ID of the Dataset
+args: ID: ID of the Dataset
 
-#!knowledge-hybrid delete-dataset ${id}
+#!knowledge-hybrid delete-dataset ${ID}
 
 ---
 name: get_datasets
