@@ -16,6 +16,60 @@ from llama_index.embeddings.ollama import OllamaEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
 
 
+# Core logic for ingesting a dataset
+def ingest_data(
+    dataset,
+    source,
+    uri="http://localhost:19530",  # Default Milvus URI
+    embedding_model="openai",  # Default embedding model is OpenAI
+    openai_embedding_model="text-embedding-3-small",  # Default OpenAI model name
+    ollama_embedding_model="jina/jina-embeddings-v2-base-en",  # Default Ollama model name
+):
+    """
+    Core function to ingest data from a directory into a dataset.
+
+    Args:
+        dataset (str): The dataset to ingest into.
+        source (str): The directory path to ingest data from.
+        uri (str): Milvus server URI.
+        embedding_model (str): The embedding model to use.
+        openai_embedding_model (str): Name of the OpenAI embedding model.
+        ollama_embedding_model (str): Name of the Ollama embedding model.
+    """
+    try:
+        # Get Milvus client
+        client = get_client(uri=uri)
+
+        # Check if the dataset (collection) exists
+        if not client.has_collection(dataset):
+            print(f"Dataset '{dataset}' does not exist.")
+            return
+
+        print(f"Source: {source}")
+
+        # Check if the source is a file or directory
+        if os.path.isfile(source):
+            print(f"Invalid source: {source}. Cannot provide a file as a source.")
+            return
+        elif os.path.isdir(source):
+            print(f"Ingesting directory: {source}")
+            ingest_directory(
+                source,
+                dataset,
+                uri,
+                embedding_model,
+                openai_embedding_model,
+                ollama_embedding_model,
+            )
+        else:
+            print(f"Invalid source: {source}. The specified file or directory does not exist.")
+            return
+
+        print(f"Data ingestion into dataset '{dataset}' completed successfully.")
+    except Exception as e:
+        print(f"Failed to ingest data into dataset '{dataset}': {str(e)}")
+
+# Refactored directory ingestion logic
 def ingest_directory(
     source: str,
     collection_name: str,
@@ -24,10 +78,13 @@ def ingest_directory(
     openai_embedding_model: str,
     ollama_embedding_model: str,
 ) -> None:
+    """
+    Core logic to ingest documents from a directory and process them for indexing.
+    """
     reader = SimpleDirectoryReader(
         source,
         recursive=True,
-        required_exts=[".pptx", ".pdf"],
+        required_exts=[".pptx", ".pdf", ".txt"],
     )
     grouped_docs = defaultdict(list)
     for docs in tqdm(
@@ -41,7 +98,6 @@ def ingest_directory(
 
     combined_docs = []
     for file_path, docs in grouped_docs.items():
-        # Sort documents by page number
         sorted_docs = sorted(
             docs,
             key=lambda x: (
@@ -50,11 +106,7 @@ def ingest_directory(
                 else 0
             ),
         )
-
-        # Combine text from all pages
         combined_text = "\n\n".join(doc.text for doc in sorted_docs if doc.text.strip())
-
-        # Create a new document with combined text
         combined_doc = Document(
             text=combined_text,
             metadata={
@@ -71,14 +123,14 @@ def ingest_directory(
 
     try:
         vector_store = MilvusVectorStore(
-            dim=1536,  # TODO: Hardcoding for now
+            dim=1536,
             collection_name=collection_name,
             overwrite=False,
             uri=uri,
-            enable_sparse=True,  # TODO: Hardcoding for now
+            enable_sparse=True,
             sparse_embedding_function=SparseEmbedding(),
             hybrid_ranker="RRFRanker",
-            hybrid_ranker_params={"k": 60},  # TODO: Hardcoding for now
+            hybrid_ranker_params={"k": 60},
         )
         if embedding_model == "ollama":
             embed_model = OllamaEmbedding(
@@ -90,7 +142,7 @@ def ingest_directory(
             embed_model = OpenAIEmbedding(model=openai_embedding_model)
 
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
-        index = VectorStoreIndex.from_documents(
+        VectorStoreIndex.from_documents(
             combined_docs,
             storage_context=storage_context,
             show_progress=True,
@@ -100,9 +152,10 @@ def ingest_directory(
             embed_model=embed_model,
         )
     except Exception as e:
-        click.echo(f"Failed to index data: {str(e)}", err=True)
+        print(f"Failed to index data: {str(e)}")
 
 
+# Click-decorated command for CLI usage
 @click.command("ingest")
 @click.option(
     "-d", "--dataset", required=True, help="Name of the dataset to ingest into"
@@ -139,47 +192,7 @@ def ingest_dataset(
 ):
     """
     Ingest data from a directory into an existing dataset.
-
-    SOURCE: The directory to ingest.
     """
-    try:
-        # Get Milvus client
-        client = get_client(uri=uri)
-
-        # Check if the dataset (collection) exists
-        if not client.has_collection(dataset):
-            click.echo(f"Dataset '{dataset}' does not exist.", err=True)
-            return
-
-        print(source)
-
-        # Check if the source is a file or directory
-        if os.path.isfile(source):
-            click.echo(
-                f"Invalid source: {source}. Cannot provide a file as a source.",
-                err=True,
-            )
-            return
-        elif os.path.isdir(source):
-            click.echo(f"Ingesting directory: {source}")
-            # TODO: Add logic for ingesting a directory
-            ingest_directory(
-                source,
-                dataset,
-                uri,
-                embedding_model,
-                openai_embedding_model,
-                ollama_embedding_model,
-            )
-        else:
-            click.echo(
-                f"Invalid source: {source}. The specified file or directory does not exist.",
-                err=True,
-            )
-            return
-
-        click.echo(f"Data ingestion into dataset '{dataset}' completed successfully.")
-    except Exception as e:
-        click.echo(
-            f"Failed to ingest data into dataset '{dataset}': {str(e)}", err=True
-        )
+    ingest_data(
+        dataset, source, uri, embedding_model, openai_embedding_model, ollama_embedding_model
+    )

@@ -1,16 +1,15 @@
 import click
 from knowledge.datastore.client import get_client
-
-
-@click.command("get-datasets")
-@click.option(
-    "--uri",
-    default="http://localhost:19530",
-    help="Milvus server URI. (default: http://localhost:19530)",
-)
-def get_datasets(uri):
+# Core function to retrieve datasets
+def get_all_datasets(uri="http://localhost:19530"):
     """
-    Get all datasets (collections) from the Knowledge Base.
+    Retrieve all datasets (collections) from the Knowledge Base.
+    
+    Args:
+        uri (str): The Milvus server URI.
+
+    Returns:
+        list: A list of available dataset names.
     """
     try:
         # Get Milvus client
@@ -20,10 +19,26 @@ def get_datasets(uri):
         collections = client.list_collections()
 
         if collections:
-            click.echo("Available datasets:")
-            for collection in collections:
-                click.echo(f"- {collection}")
+            return collections
         else:
-            click.echo("No datasets found.")
+            return "No datasets found."
     except Exception as e:
-        click.echo(f"Failed to retrieve datasets: {str(e)}", err=True)
+        return f"Failed to retrieve datasets: {str(e)}"
+
+
+# Click-decorated function for CLI usage
+@click.command("get-datasets")
+@click.option(
+    "--uri",
+    default="http://localhost:19530",
+    help="Milvus server URI. (default: http://localhost:19530)",
+)
+def get_datasets(uri):
+    collections = get_all_datasets(uri)
+    
+    if isinstance(collections, list):
+        click.echo("Available datasets:")
+        for collection in collections:
+            click.echo(f"- {collection}")
+    else:
+        click.echo(collections)

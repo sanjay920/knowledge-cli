@@ -5,7 +5,56 @@ from knowledge.embeddings.sparse_embedding import SparseEmbedding
 from llama_index.embeddings.ollama import OllamaEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
 
+# Core logic separated into a callable function
+def create_new_dataset(
+    collection_name,
+    dimension=1536,  # Default dimension of vector embeddings
+    uri="http://localhost:19530",  # Default Milvus server URI
+    overwrite=False,  # Default is not to overwrite existing collection
+    enable_sparse=True,  # Default is to enable sparse vector storage
+    hybrid_k=60,  # Default K value for hybrid ranker
+    embedding_model="openai",  # Default embedding model
+    openai_embedding_model="text-embedding-3-small",  # Default OpenAI embedding model
+    ollama_embedding_model="jina/jina-embeddings-v2-base-en",  # Default Ollama embedding model
+):
+    """
+    Create a new dataset using LlamaIndex and Milvus.
+    This is the core function that can be called programmatically.
+    """
+    try:
+        vector_store = MilvusVectorStore(
+            dim=dimension,
+            collection_name=collection_name,
+            overwrite=overwrite,
+            uri=uri,
+            enable_sparse=enable_sparse,
+            sparse_embedding_function=SparseEmbedding(),
+            hybrid_ranker="RRFRanker",
+            hybrid_ranker_params={"k": hybrid_k},
+        )
 
+        if embedding_model == "ollama":
+            embed_model = OllamaEmbedding(
+                model_name=ollama_embedding_model,
+                base_url="http://localhost:11434",
+                ollama_additional_kwargs={"mirostat": 0},
+            )
+        else:
+            embed_model = OpenAIEmbedding(model=openai_embedding_model)
+
+        storage_context = StorageContext.from_defaults(vector_store=vector_store)
+
+        VectorStoreIndex.from_vector_store(
+            vector_store, storage_context=storage_context, embed_model=embed_model
+        )
+
+        return f"Dataset '{collection_name}' created successfully."
+    
+    except Exception as e:
+        return f"Failed to create dataset '{collection_name}': {str(e)}"
+
+
+# The Click-decorated version for CLI use
 @click.command("create-dataset")
 @click.argument("collection_name", type=str, required=True)
 @click.option(
@@ -41,7 +90,7 @@ from llama_index.embeddings.openai import OpenAIEmbedding
 @click.option(
     "--openai-embedding-model",
     default="text-embedding-3-small",
-    help="Ollama model name. (default: text-embedding-3-small)",
+    help="OpenAI model name. (default: text-embedding-3-small)",
 )
 @click.option(
     "--ollama-embedding-model",
@@ -59,38 +108,15 @@ def create_dataset(
     openai_embedding_model,
     ollama_embedding_model,
 ):
-    """
-    Create a new dataset using LlamaIndex and Milvus.
-
-    COLLECTION_NAME: The name of the collection to create.
-    """
-    try:
-        vector_store = MilvusVectorStore(
-            dim=dimension,
-            collection_name=collection_name,
-            overwrite=overwrite,
-            uri=uri,
-            enable_sparse=enable_sparse,
-            sparse_embedding_function=SparseEmbedding(),
-            hybrid_ranker="RRFRanker",
-            hybrid_ranker_params={"k": hybrid_k},
-        )
-
-        if embedding_model == "ollama":
-            embed_model = OllamaEmbedding(
-                model_name=ollama_embedding_model,
-                base_url="http://localhost:11434",
-                ollama_additional_kwargs={"mirostat": 0},
-            )
-        else:
-            embed_model = OpenAIEmbedding(model=openai_embedding_model)
-
-        storage_context = StorageContext.from_defaults(vector_store=vector_store)
-
-        VectorStoreIndex.from_vector_store(
-            vector_store, storage_context=storage_context, embed_model=embed_model
-        )
-
-        click.echo(f"Dataset '{collection_name}' created successfully.")
-    except Exception as e:
-        click.echo(f"Failed to create dataset '{collection_name}': {str(e)}", err=True)
+    result = create_new_dataset(
+        collection_name,
+        dimension,
+        uri,
+        overwrite,
+        enable_sparse,
+        hybrid_k,
+        embedding_model,
+        openai_embedding_model,
+        ollama_embedding_model,
+    )
+    click.echo(result)
